@@ -1,0 +1,592 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MangaDeck — your reading desk</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Zen+Kaku+Gothic+New:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --page:#ECE6E0;     /* warm paper desk behind the panels */
+  --panel:#FFFFFF;    /* paper-white panel */
+  --ink:#16120F;      /* warm black ink */
+  --ink-2:#6E645D;    /* muted ink */
+  --ink-3:#A79E97;    /* faint ink */
+  --accent:#F2305F;   /* manga cover rose-red */
+  --accent-deep:#C5103F;
+  --accent-wash:#FCE4EB;
+  --line:2px;         /* panel border weight */
+  --gutter:18px;
+  --r:7px;
+  --display:"Anton","Arial Narrow",sans-serif;
+  --text:"Zen Kaku Gothic New",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{
+  font-family:var(--text);
+  color:var(--ink);
+  background:var(--page);
+  /* faint screentone over the whole desk */
+  background-image:radial-gradient(rgba(22,18,15,.05) 1px, transparent 1.4px);
+  background-size:7px 7px;
+  -webkit-font-smoothing:antialiased;
+  line-height:1.45;
+}
+.wrap{max-width:1180px;margin:0 auto;padding:22px 20px 80px}
+a{color:inherit}
+button{font-family:inherit}
+
+/* ---------- masthead ---------- */
+.masthead{
+  display:flex;flex-wrap:wrap;align-items:flex-end;gap:14px 24px;
+  padding:8px 4px 16px;border-bottom:3px solid var(--ink);margin-bottom:18px;
+}
+.brand{display:flex;flex-direction:column;gap:2px}
+.logo{
+  font-family:var(--display);font-weight:400;
+  font-size:clamp(2.5rem,7.5vw,4.6rem);line-height:.86;
+  letter-spacing:.01em;text-transform:uppercase;margin:0;
+}
+.logo .b{color:var(--accent)}
+.tagline{font-size:.74rem;letter-spacing:.34em;text-transform:uppercase;color:var(--ink-2);font-weight:700;padding-left:3px}
+.stats{
+  margin-left:auto;display:flex;align-items:center;gap:10px;
+  padding:6px 4px;
+}
+.stat{display:flex;flex-direction:column;align-items:flex-end;line-height:1}
+.stat b{font-family:var(--display);font-size:1.9rem;font-weight:400}
+.stat span{font-size:.66rem;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-2);margin-top:3px}
+.stat .accent{color:var(--accent)}
+.stat-div{width:var(--line);align-self:stretch;background:var(--ink);opacity:.18;margin:2px 0}
+
+/* ---------- newsstand (jump to sites) ---------- */
+.newsstand{display:flex;flex-wrap:wrap;align-items:center;gap:9px;margin:0 0 16px}
+.newsstand .eyebrow{font-size:.66rem;letter-spacing:.22em;text-transform:uppercase;color:var(--ink-2);font-weight:700;margin-right:4px}
+.site-link{
+  display:inline-flex;align-items:center;gap:8px;text-decoration:none;
+  background:var(--panel);border:var(--line) solid var(--ink);border-radius:99px;
+  padding:7px 13px 7px 10px;font-size:.84rem;font-weight:700;
+  transition:transform .12s ease, box-shadow .12s ease;
+}
+.site-link .swatch{width:11px;height:11px;border-radius:50%;border:1.5px solid var(--ink)}
+.site-link:hover{transform:translateY(-2px);box-shadow:3px 3px 0 var(--ink)}
+.site-link:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+
+/* ---------- toolbar ---------- */
+.toolbar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:22px}
+.search{position:relative;flex:1 1 230px;min-width:180px}
+.search input{
+  width:100%;border:var(--line) solid var(--ink);border-radius:var(--r);
+  background:var(--panel);padding:11px 12px 11px 38px;font-size:.95rem;font-family:inherit;color:var(--ink);
+}
+.search svg{position:absolute;left:12px;top:50%;transform:translateY(-50%);opacity:.55}
+.field{position:relative}
+.field select{
+  appearance:none;border:var(--line) solid var(--ink);border-radius:var(--r);
+  background:var(--panel);padding:11px 34px 11px 13px;font-size:.9rem;font-weight:600;
+  font-family:inherit;color:var(--ink);cursor:pointer;
+}
+.field::after{content:"";position:absolute;right:13px;top:50%;width:7px;height:7px;border-right:2px solid var(--ink);border-bottom:2px solid var(--ink);transform:translateY(-70%) rotate(45deg);pointer-events:none}
+input:focus-visible,select:focus-visible{outline:3px solid var(--accent);outline-offset:1px}
+
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:7px;
+  border:var(--line) solid var(--ink);border-radius:var(--r);
+  background:var(--panel);color:var(--ink);font-weight:700;font-size:.9rem;
+  padding:11px 15px;cursor:pointer;text-decoration:none;line-height:1;
+  transition:transform .12s ease, box-shadow .12s ease, background .12s ease;
+}
+.btn:hover{transform:translateY(-2px);box-shadow:3px 3px 0 var(--ink)}
+.btn:active{transform:translateY(0);box-shadow:none}
+.btn:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.btn--accent{background:var(--accent);color:#fff;border-color:var(--ink)}
+.btn--accent:hover{background:var(--accent-deep)}
+.btn--ghost{background:transparent;border-color:transparent;box-shadow:none;color:var(--ink-2);padding:8px}
+.btn--ghost:hover{background:rgba(22,18,15,.06);transform:none;box-shadow:none;color:var(--ink)}
+.spacer{flex:1 1 auto}
+.linklike{background:none;border:none;color:var(--ink-2);font-weight:600;font-size:.82rem;cursor:pointer;text-decoration:underline;text-underline-offset:3px;padding:6px 4px}
+.linklike:hover{color:var(--accent)}
+
+/* ---------- grid of panels ---------- */
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(196px,1fr));gap:var(--gutter)}
+.panel{
+  background:var(--panel);border:var(--line) solid var(--ink);border-radius:var(--r);
+  overflow:hidden;display:flex;flex-direction:column;position:relative;
+  box-shadow:4px 4px 0 rgba(22,18,15,.08);
+  transition:transform .14s ease, box-shadow .14s ease;
+}
+.panel:hover{transform:translateY(-4px);box-shadow:6px 8px 0 var(--ink)}
+.cover{position:relative;aspect-ratio:3/4;overflow:hidden;border-bottom:var(--line) solid var(--ink);background:#efe9e3}
+.cover img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:2}
+.cover img.hide{display:none}
+.tone{
+  position:absolute;inset:0;display:flex;align-items:center;justify-content:center;z-index:1;
+  background-color:#efe9e3;
+  background-image:radial-gradient(var(--ink) 1.4px, transparent 1.8px);
+  background-size:9px 9px;background-position:0 0;
+}
+.tone span{font-family:var(--display);font-size:3.4rem;color:var(--ink);opacity:.78;line-height:1;text-transform:uppercase}
+.tab{
+  position:absolute;top:9px;left:9px;z-index:3;
+  font-size:.66rem;font-weight:800;letter-spacing:.04em;color:#fff;
+  background:var(--ink);border:1.5px solid var(--ink);border-radius:5px;
+  padding:3px 7px;text-shadow:0 1px 0 rgba(0,0,0,.25);
+}
+.fav{
+  position:absolute;top:7px;right:7px;z-index:3;width:30px;height:30px;
+  display:flex;align-items:center;justify-content:center;
+  border:1.5px solid var(--ink);border-radius:50%;background:var(--panel);
+  cursor:pointer;font-size:.95rem;color:var(--ink-3);transition:transform .12s ease;
+}
+.fav[aria-pressed="true"]{color:var(--accent);border-color:var(--accent)}
+.fav:hover{transform:scale(1.12)}
+.fav:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.fold{position:absolute;bottom:0;right:0;z-index:3;width:0;height:0;border-style:solid;border-width:0 0 22px 22px;border-color:transparent transparent var(--ink) transparent;opacity:.18}
+
+.body{padding:12px 12px 6px;display:flex;flex-direction:column;gap:6px;flex:1}
+.meta{display:flex;align-items:center;gap:7px;font-size:.72rem;color:var(--ink-2);min-height:14px}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--ink-3);flex:none;border:1px solid rgba(0,0,0,.15)}
+.meta .read-ago{margin-left:auto;color:var(--ink-3);font-size:.68rem}
+.title{font-size:1.02rem;font-weight:700;line-height:1.22;margin:0;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.chapter{font-size:.82rem;color:var(--ink-2);font-weight:600;margin-top:auto}
+.chapter b{font-family:var(--display);font-weight:400;font-size:1.12rem;color:var(--ink);letter-spacing:.02em}
+
+.actions{display:flex;align-items:center;gap:4px;padding:9px 10px 11px;border-top:1.5px dashed rgba(22,18,15,.18)}
+.read{
+  flex:1;display:inline-flex;align-items:center;justify-content:center;gap:6px;
+  background:var(--accent);color:#fff;border:1.5px solid var(--ink);border-radius:6px;
+  padding:8px 10px;font-weight:800;font-size:.84rem;text-decoration:none;cursor:pointer;
+  transition:background .12s ease, transform .1s ease;
+}
+.read:hover{background:var(--accent-deep)}
+.read:active{transform:scale(.98)}
+.read.disabled{background:#cfc8c2;color:#fff;border-color:#cfc8c2;cursor:not-allowed;pointer-events:none}
+.read:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
+.icon-btn{
+  width:32px;height:32px;display:flex;align-items:center;justify-content:center;flex:none;
+  border:1.5px solid transparent;border-radius:6px;background:transparent;color:var(--ink-2);
+  cursor:pointer;font-size:.95rem;transition:background .12s,color .12s,border-color .12s;
+}
+.icon-btn:hover{background:rgba(22,18,15,.07);color:var(--ink);border-color:rgba(22,18,15,.15)}
+.icon-btn:focus-visible{outline:3px solid var(--accent);outline-offset:1px}
+.icon-btn.danger:hover{background:var(--accent-wash);color:var(--accent-deep);border-color:var(--accent)}
+
+/* ---------- empty state ---------- */
+.empty{
+  grid-column:1/-1;text-align:center;padding:54px 22px;border:var(--line) dashed var(--ink-3);border-radius:var(--r);
+  background-color:var(--panel);
+  background-image:radial-gradient(rgba(22,18,15,.07) 1.3px, transparent 1.7px);background-size:11px 11px;
+}
+.empty h2{font-family:var(--display);font-weight:400;font-size:2rem;margin:0 0 6px;text-transform:uppercase;letter-spacing:.02em}
+.empty p{color:var(--ink-2);margin:0 auto 18px;max-width:380px}
+.empty .read{display:inline-flex;flex:none;padding:11px 20px}
+
+/* ---------- modal ---------- */
+.backdrop{position:fixed;inset:0;background:rgba(22,18,15,.5);display:none;align-items:flex-start;justify-content:center;padding:28px 16px;z-index:50;overflow:auto}
+.backdrop.open{display:flex}
+.modal{
+  background:var(--panel);border:3px solid var(--ink);border-radius:10px;width:100%;max-width:460px;
+  box-shadow:10px 12px 0 rgba(22,18,15,.25);margin:auto 0;
+}
+.modal__head{display:flex;align-items:center;justify-content:space-between;padding:16px 18px;border-bottom:var(--line) solid var(--ink)}
+.modal__head h2{font-family:var(--display);font-weight:400;font-size:1.5rem;margin:0;text-transform:uppercase;letter-spacing:.02em}
+.modal__body{padding:16px 18px}
+.row{margin-bottom:13px}
+.row.two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+label{display:block;font-size:.74rem;letter-spacing:.08em;text-transform:uppercase;font-weight:700;color:var(--ink-2);margin-bottom:5px}
+.modal input,.modal select{
+  width:100%;border:var(--line) solid var(--ink);border-radius:6px;background:var(--panel);
+  padding:10px 11px;font-size:.95rem;font-family:inherit;color:var(--ink);
+}
+.hint{font-size:.72rem;color:var(--ink-3);margin-top:4px}
+.err{color:var(--accent-deep);font-size:.76rem;margin-top:5px;font-weight:600;display:none}
+.row.invalid .err{display:block}
+.row.invalid input{border-color:var(--accent)}
+.modal__foot{display:flex;gap:10px;padding:14px 18px;border-top:var(--line) solid var(--ink)}
+.modal__foot .btn{flex:1}
+
+.foot-note{margin-top:34px;text-align:center;color:var(--ink-3);font-size:.74rem}
+.foot-note b{color:var(--ink-2);font-weight:700}
+
+@media (max-width:560px){
+  .stats{margin-left:0;width:100%;justify-content:flex-start}
+  .grid{grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:13px}
+  .tone span{font-size:2.6rem}
+  .row.two{grid-template-columns:1fr}
+}
+@media (prefers-reduced-motion:reduce){
+  *{transition:none!important}
+  .panel:hover,.site-link:hover,.btn:hover{transform:none}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="masthead">
+    <div class="brand">
+      <h1 class="logo">Manga<span class="b">Deck</span></h1>
+      <div class="tagline">her reading desk</div>
+    </div>
+    <div class="stats" id="stats" aria-live="polite"></div>
+  </header>
+
+  <nav class="newsstand" aria-label="Open a site">
+    <span class="eyebrow">Jump to</span>
+    <div id="newsstand" style="display:contents"></div>
+  </nav>
+
+  <div class="toolbar">
+    <div class="search">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+      <input id="search" type="search" placeholder="Search your titles…" aria-label="Search titles">
+    </div>
+    <div class="field"><select id="f-status" aria-label="Filter by status"></select></div>
+    <div class="field"><select id="f-site" aria-label="Filter by site"></select></div>
+    <div class="field"><select id="f-sort" aria-label="Sort">
+      <option value="recent">Recently read</option>
+      <option value="updated">Recently updated</option>
+      <option value="title">Title A–Z</option>
+      <option value="chapter">Chapter count</option>
+    </select></div>
+    <button class="btn btn--accent" id="add-btn">＋ Add a series</button>
+  </div>
+
+  <main class="grid" id="grid"></main>
+
+  <div class="toolbar" style="margin-top:24px;justify-content:center;border-top:1.5px dashed rgba(22,18,15,.18);padding-top:18px">
+    <button class="linklike" id="export-btn">Back up library (export)</button>
+    <button class="linklike" id="import-btn">Restore from backup (import)</button>
+    <input type="file" id="import-file" accept="application/json,.json" hidden>
+  </div>
+
+  <p class="foot-note">Tiles open each series on its own site in a new tab. Your library is saved in <b>this browser</b> — use export to carry it between devices.</p>
+</div>
+
+<!-- add / edit modal -->
+<div class="backdrop" id="backdrop" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+  <div class="modal">
+    <div class="modal__head">
+      <h2 id="modal-title">Add a series</h2>
+      <button class="icon-btn" id="close-btn" aria-label="Close">✕</button>
+    </div>
+    <form id="form">
+      <div class="modal__body">
+        <input type="hidden" id="field-id">
+        <div class="row" id="row-title">
+          <label for="field-title">Title</label>
+          <input id="field-title" type="text" placeholder="e.g. Solo Leveling" autocomplete="off">
+          <div class="err">Add a title so you can find it later.</div>
+        </div>
+        <div class="row two">
+          <div>
+            <label for="field-site">Site</label>
+            <select id="field-site"></select>
+          </div>
+          <div>
+            <label for="field-status">Status</label>
+            <select id="field-status"></select>
+          </div>
+        </div>
+        <div class="row">
+          <label for="field-url">Where you read it</label>
+          <input id="field-url" type="text" placeholder="paste the series link" autocomplete="off">
+          <div class="hint">The “Read” button jumps straight here.</div>
+        </div>
+        <div class="row two">
+          <div>
+            <label for="field-chapter">Up to chapter</label>
+            <input id="field-chapter" type="text" placeholder="e.g. 124" autocomplete="off">
+          </div>
+          <div>
+            <label for="field-cover">Cover image link</label>
+            <input id="field-cover" type="text" placeholder="optional" autocomplete="off">
+          </div>
+        </div>
+      </div>
+      <div class="modal__foot">
+        <button type="button" class="btn" id="cancel-btn">Cancel</button>
+        <button type="submit" class="btn btn--accent" id="save-btn">Save</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+"use strict";
+
+/* ---- personalize here ---- */
+const STORE_KEY = "mangadeck.v1";
+
+const SITES = {
+  comix:        {label:"Comix",        home:"https://comix.to",             color:"#7C5CFF"},
+  mangaupdates: {label:"MangaUpdates", home:"https://www.mangaupdates.com", color:"#E8853B"},
+  webtoon:      {label:"Webtoon",      home:"https://www.webtoons.com",     color:"#00C752"},
+  mangadex:     {label:"MangaDex",     home:"https://mangadex.org",         color:"#FF6740"},
+  tapas:        {label:"Tapas",        home:"https://tapas.io",             color:"#E6B400"},
+  custom:       {label:"Other",        home:"",                             color:"#16120F"}
+};
+const STATUS = {
+  reading:   {label:"Reading",      dot:"#F2305F"},
+  planned:   {label:"Plan to read", dot:"#7C5CFF"},
+  "on-hold": {label:"On hold",      dot:"#A79E97"},
+  completed: {label:"Completed",    dot:"#16120F"}
+};
+
+/* ---- state + storage (resilient: never crash if storage is blocked) ---- */
+let series = [];
+let memoryOnly = false;
+function load(){
+  try{ const raw = localStorage.getItem(STORE_KEY); series = raw ? JSON.parse(raw) : []; }
+  catch(e){ series = []; memoryOnly = true; }
+}
+function save(){
+  try{ localStorage.setItem(STORE_KEY, JSON.stringify(series)); }
+  catch(e){ memoryOnly = true; }
+}
+
+/* ---- helpers ---- */
+const $ = s => document.querySelector(s);
+function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function uid(){ return "s_"+Date.now().toString(36)+Math.random().toString(36).slice(2,7); }
+function normUrl(u){ u=(u||"").trim(); if(!u) return ""; if(!/^https?:\/\//i.test(u) && !/^data:/i.test(u)) u="https://"+u; return u; }
+function siteOf(k){ return SITES[k] || SITES.custom; }
+function bumpChapter(ch){
+  const s = String(ch==null?"":ch);
+  const m = s.match(/(\d+(?:\.\d+)?)(\D*)$/);
+  if(m){ const n = parseFloat(m[1]); const inc = Number.isInteger(n) ? n+1 : Math.round((n+1)*100)/100; return s.slice(0,m.index)+inc+m[2]; }
+  return s ? s : "1";
+}
+function chapterNum(ch){ const m=String(ch==null?"":ch).match(/(\d+(?:\.\d+)?)/); return m?parseFloat(m[1]):0; }
+function relTime(ts){
+  if(!ts) return "";
+  const s=(Date.now()-ts)/1000;
+  if(s<60) return "just now";
+  const m=s/60; if(m<60) return Math.floor(m)+"m ago";
+  const h=m/60; if(h<24) return Math.floor(h)+"h ago";
+  const d=h/24; if(d<7) return Math.floor(d)+"d ago";
+  const w=d/7; if(w<5) return Math.floor(w)+"w ago";
+  const mo=d/30; if(mo<12) return Math.floor(mo)+"mo ago";
+  return Math.floor(d/365)+"y ago";
+}
+
+/* ---- build the static selects + site shortcuts ---- */
+function buildChrome(){
+  // newsstand shortcuts
+  const ns = $("#newsstand");
+  ns.innerHTML = Object.keys(SITES).filter(k=>SITES[k].home).map(k=>{
+    const s=SITES[k];
+    return `<a class="site-link" href="${s.home}" target="_blank" rel="noopener"><span class="swatch" style="background:${s.color}"></span>${esc(s.label)}</a>`;
+  }).join("");
+
+  // filter selects
+  $("#f-status").innerHTML = `<option value="all">All statuses</option>` +
+    Object.keys(STATUS).map(k=>`<option value="${k}">${esc(STATUS[k].label)}</option>`).join("");
+  $("#f-site").innerHTML = `<option value="all">All sites</option>` +
+    Object.keys(SITES).map(k=>`<option value="${k}">${esc(SITES[k].label)}</option>`).join("");
+
+  // modal selects
+  $("#field-site").innerHTML = Object.keys(SITES).map(k=>`<option value="${k}">${esc(SITES[k].label)}</option>`).join("");
+  $("#field-status").innerHTML = Object.keys(STATUS).map(k=>`<option value="${k}">${esc(STATUS[k].label)}</option>`).join("");
+}
+
+/* ---- rendering ---- */
+function visibleList(){
+  const q = $("#search").value.trim().toLowerCase();
+  const fs = $("#f-status").value, fsite = $("#f-site").value, sort = $("#f-sort").value;
+  let list = series.filter(x=>{
+    if(fs!=="all" && x.status!==fs) return false;
+    if(fsite!=="all" && x.site!==fsite) return false;
+    if(q && !String(x.title||"").toLowerCase().includes(q)) return false;
+    return true;
+  });
+  list.sort((a,b)=>{
+    if(!!b.fav - !!a.fav) return (!!b.fav) - (!!a.fav);     // favourites pinned on top
+    if(sort==="title") return String(a.title||"").localeCompare(String(b.title||""));
+    if(sort==="chapter") return chapterNum(b.chapter)-chapterNum(a.chapter);
+    if(sort==="updated") return (b.updatedAt||0)-(a.updatedAt||0);
+    return (b.lastReadAt||b.updatedAt||0)-(a.lastReadAt||a.updatedAt||0); // recent
+  });
+  return list;
+}
+
+function renderStats(){
+  const reading = series.filter(x=>x.status==="reading").length;
+  $("#stats").innerHTML =
+    `<div class="stat"><b class="accent">${reading}</b><span>reading</span></div>`+
+    `<div class="stat-div"></div>`+
+    `<div class="stat"><b>${series.length}</b><span>in library</span></div>`;
+}
+
+function panelHTML(x){
+  const s = siteOf(x.site);
+  const st = STATUS[x.status] || STATUS.reading;
+  const initial = esc((String(x.title||"?").trim()[0]||"?").toUpperCase());
+  const cover = x.cover ? `<img src="${esc(x.cover)}" alt="" loading="lazy" onerror="this.classList.add('hide')">` : "";
+  const ago = x.lastReadAt ? `<span class="read-ago">read ${relTime(x.lastReadAt)}</span>` : "";
+  const ch = x.chapter ? `<b>Ch. ${esc(x.chapter)}</b>` : `<b style="color:var(--ink-3)">not started</b>`;
+  const hasUrl = !!x.url;
+  const read = hasUrl
+    ? `<a class="read" href="${esc(x.url)}" target="_blank" rel="noopener" data-act="read">▸ Read</a>`
+    : `<span class="read disabled" title="No link saved">▸ Read</span>`;
+  return `<article class="panel" data-id="${x.id}">
+    <div class="cover">
+      <div class="tone"><span>${initial}</span></div>
+      ${cover}
+      <span class="tab" style="background:${s.color}">${esc(s.label)}</span>
+      <button class="fav" data-act="fav" aria-pressed="${x.fav?'true':'false'}" aria-label="Favourite">${x.fav?'♥':'♡'}</button>
+      <span class="fold"></span>
+    </div>
+    <div class="body">
+      <div class="meta"><span class="dot" style="background:${st.dot}"></span>${esc(st.label)}${ago}</div>
+      <h3 class="title">${esc(x.title||"Untitled")}</h3>
+      <div class="chapter">${ch}</div>
+    </div>
+    <div class="actions">
+      ${read}
+      <button class="icon-btn" data-act="inc" aria-label="Add one chapter" title="+1 chapter">＋1</button>
+      <button class="icon-btn" data-act="edit" aria-label="Edit" title="Edit">✎</button>
+      <button class="icon-btn danger" data-act="del" aria-label="Remove" title="Remove">✕</button>
+    </div>
+  </article>`;
+}
+
+function render(){
+  renderStats();
+  const list = visibleList();
+  const grid = $("#grid");
+  if(series.length===0){
+    grid.innerHTML = `<div class="empty"><h2>Your page is blank</h2><p>Add the first panel — a manga, manhwa or webcomic and the link where you read it. It’ll wait right here for you.</p><button class="read" id="empty-add">＋ Add a series</button></div>`;
+    $("#empty-add").onclick = ()=>openModal();
+    return;
+  }
+  if(list.length===0){
+    grid.innerHTML = `<div class="empty"><h2>Nothing matches</h2><p>No series fit those filters. Clear the search or pick “All”.</p></div>`;
+    return;
+  }
+  grid.innerHTML = list.map(panelHTML).join("");
+}
+
+/* ---- modal ---- */
+let lastFocus=null;
+function openModal(id){
+  const editing = !!id;
+  const x = editing ? series.find(s=>s.id===id) : null;
+  $("#modal-title").textContent = editing ? "Edit series" : "Add a series";
+  $("#save-btn").textContent = editing ? "Save changes" : "Add to library";
+  $("#field-id").value = editing ? id : "";
+  $("#field-title").value = x ? (x.title||"") : "";
+  $("#field-site").value  = x ? (x.site||"comix") : "comix";
+  $("#field-status").value= x ? (x.status||"reading") : "reading";
+  $("#field-url").value   = x ? (x.url||"") : "";
+  $("#field-chapter").value = x ? (x.chapter||"") : "";
+  $("#field-cover").value = x ? (x.cover||"") : "";
+  $("#row-title").classList.remove("invalid");
+  lastFocus = document.activeElement;
+  $("#backdrop").classList.add("open");
+  setTimeout(()=>$("#field-title").focus(),30);
+}
+function closeModal(){
+  $("#backdrop").classList.remove("open");
+  if(lastFocus && lastFocus.focus) lastFocus.focus();
+}
+function submitForm(e){
+  e.preventDefault();
+  const title = $("#field-title").value.trim();
+  if(!title){ $("#row-title").classList.add("invalid"); $("#field-title").focus(); return; }
+  const id = $("#field-id").value;
+  const now = Date.now();
+  const data = {
+    title,
+    site: $("#field-site").value,
+    status: $("#field-status").value,
+    url: normUrl($("#field-url").value),
+    chapter: $("#field-chapter").value.trim(),
+    cover: normUrl($("#field-cover").value)
+  };
+  if(id){
+    const x = series.find(s=>s.id===id);
+    if(x){ Object.assign(x, data); x.updatedAt = now; }
+  }else{
+    series.push(Object.assign({id:uid(), fav:false, createdAt:now, updatedAt:now, lastReadAt:0}, data));
+  }
+  save(); render(); closeModal();
+}
+
+/* ---- actions on grid (event delegation) ---- */
+function onGridClick(e){
+  const btn = e.target.closest("[data-act]");
+  if(!btn) return;
+  const card = e.target.closest(".panel");
+  if(!card) return;
+  const id = card.dataset.id;
+  const x = series.find(s=>s.id===id);
+  if(!x) return;
+  const act = btn.dataset.act;
+
+  if(act==="read"){ x.lastReadAt = Date.now(); x.updatedAt = Date.now(); save(); render(); return; } // link still opens
+  if(act==="fav"){ x.fav = !x.fav; x.updatedAt = Date.now(); save(); render(); return; }
+  if(act==="inc"){ x.chapter = bumpChapter(x.chapter); x.lastReadAt = Date.now(); x.updatedAt = Date.now(); save(); render(); return; }
+  if(act==="edit"){ openModal(id); return; }
+  if(act==="del"){
+    if(confirm(`Remove “${x.title}” from your library?`)){ series = series.filter(s=>s.id!==id); save(); render(); }
+    return;
+  }
+}
+
+/* ---- export / import ---- */
+function exportLib(){
+  const blob = new Blob([JSON.stringify(series,null,2)], {type:"application/json"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "mangadeck-backup.json";
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(a.href), 1000);
+}
+function importLib(file){
+  const r = new FileReader();
+  r.onload = ()=>{
+    try{
+      const arr = JSON.parse(r.result);
+      if(!Array.isArray(arr)) throw new Error("not a list");
+      const byId = {}; series.forEach(s=>byId[s.id]=s);
+      arr.forEach(s=>{ if(s && s.title){ const id=s.id||uid(); byId[id]=Object.assign({id, fav:false, createdAt:Date.now(), updatedAt:Date.now(), lastReadAt:0}, s, {id}); } });
+      series = Object.values(byId);
+      save(); render();
+    }catch(err){ alert("That file doesn’t look like a MangaDeck backup."); }
+  };
+  r.readAsText(file);
+}
+
+/* ---- wire up ---- */
+function init(){
+  load();
+  buildChrome();
+  render();
+
+  $("#add-btn").onclick = ()=>openModal();
+  $("#close-btn").onclick = closeModal;
+  $("#cancel-btn").onclick = closeModal;
+  $("#form").addEventListener("submit", submitForm);
+  $("#backdrop").addEventListener("click", e=>{ if(e.target.id==="backdrop") closeModal(); });
+  document.addEventListener("keydown", e=>{ if(e.key==="Escape" && $("#backdrop").classList.contains("open")) closeModal(); });
+
+  $("#grid").addEventListener("click", onGridClick);
+  ["#search","#f-status","#f-site","#f-sort"].forEach(s=>$(s).addEventListener("input", render));
+
+  $("#export-btn").onclick = exportLib;
+  $("#import-btn").onclick = ()=>$("#import-file").click();
+  $("#import-file").addEventListener("change", e=>{ if(e.target.files[0]) importLib(e.target.files[0]); e.target.value=""; });
+
+  if(memoryOnly){
+    $(".foot-note").innerHTML = "Heads up: this preview can’t save to storage, so changes last only for this session. Open the downloaded file or deploy it and saving works normally.";
+  }
+}
+init();
+</script>
+</body>
+</html>
