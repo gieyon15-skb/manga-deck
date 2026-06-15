@@ -99,6 +99,39 @@ button{font-family:inherit}
 .site-link .swatch{width:11px;height:11px;border-radius:50%;border:1.5px solid var(--ink)}
 .site-link:hover{transform:translateY(-2px);box-shadow:3px 3px 0 var(--ink)}
 .site-link:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.site-chip{display:inline-flex;align-items:center;gap:5px}
+.site-add{width:30px;height:30px;display:inline-flex;align-items:center;justify-content:center;flex:none;
+  border:2px solid var(--ink);border-radius:50%;background:var(--panel);color:var(--ink);
+  font-weight:800;font-size:1rem;line-height:1;cursor:pointer;transition:background .12s,color .12s,transform .12s}
+.site-add:hover{background:var(--accent);color:#fff;transform:translateY(-2px)}
+.site-add:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+
+/* fetch-from-link button + status note inside the add form */
+.url-row{display:flex;gap:8px;align-items:stretch}
+.url-row input{flex:1;min-width:0}
+.fetch-btn{flex:none;display:inline-flex;align-items:center;white-space:nowrap;border:var(--line) solid var(--ink);border-radius:6px;background:var(--ink);color:#fff;
+  font-weight:700;font-size:.82rem;padding:0 12px;cursor:pointer;transition:opacity .12s}
+.fetch-btn:hover{opacity:.85}
+.fetch-btn:disabled{opacity:.4;cursor:default}
+.fetch-btn:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.fetch-note{font-size:.72rem;margin-top:5px;min-height:1em}
+.fetch-note.ok{color:#1f7a3d}
+.fetch-note.warn{color:var(--accent-deep)}
+.fetch-note.busy{color:var(--ink-3)}
+
+/* quick-add / bookmarklet panel */
+.quickadd{margin-top:26px;border:var(--line) dashed rgba(255,255,255,.28);border-radius:var(--r);background:rgba(15,12,10,.5);
+  -webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px);color:#fff}
+.quickadd summary{cursor:pointer;list-style:none;padding:14px 18px;font-weight:700;font-size:.92rem;display:flex;align-items:center;gap:8px}
+.quickadd summary::-webkit-details-marker{display:none}
+.quickadd summary::before{content:"▸";color:var(--accent);transition:transform .15s}
+.quickadd[open] summary::before{transform:rotate(90deg)}
+.quickadd .qa-body{padding:0 18px 18px;font-size:.86rem;color:rgba(255,255,255,.78);line-height:1.5}
+.quickadd ol{margin:6px 0 0;padding-left:20px}
+.quickadd li{margin:6px 0}
+.bookmarklet{display:inline-block;background:var(--accent);color:#fff;font-weight:800;text-decoration:none;
+  border:2px solid #fff;border-radius:8px;padding:8px 14px;box-shadow:0 4px 14px rgba(0,0,0,.4)}
+.bookmarklet:hover{background:var(--accent-deep)}
 
 /* ---------- toolbar ---------- */
 .toolbar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:22px}
@@ -255,7 +288,7 @@ label{display:block;font-size:.74rem;letter-spacing:.08em;text-transform:upperca
   <header class="masthead">
     <div class="brand">
       <h1 class="logo">Manga<span class="b">Deck</span></h1>
-      <div class="tagline">your reading dashboard</div>
+      <div class="tagline">her reading desk</div>
     </div>
     <div class="stats" id="stats" aria-live="polite"></div>
   </header>
@@ -289,6 +322,19 @@ label{display:block;font-size:.74rem;letter-spacing:.08em;text-transform:upperca
     <input type="file" id="import-file" accept="application/json,.json" hidden>
   </div>
 
+  <details class="quickadd">
+    <summary>⚡ One-tap adding — set up the “Add to MangaDeck” button</summary>
+    <div class="qa-body">
+      The reliable way to grab a title <em>and</em> its cover: drag this button to your bookmarks bar (on a computer), then click it whenever you’re on a series page.
+      <p style="margin:13px 0"><a class="bookmarklet" id="bookmarklet" href="#" onclick="return false">＋ Add to MangaDeck</a></p>
+      <ol>
+        <li>Show the bookmarks bar with <b>Ctrl/Cmd&nbsp;+&nbsp;Shift&nbsp;+&nbsp;B</b>.</li>
+        <li>Drag the pink button above onto it.</li>
+        <li>On any series page (Webtoon, Comix, MangaDex…), click that bookmark — MangaDeck opens with the title, cover and link already filled in. Press Save.</li>
+      </ol>
+    </div>
+  </details>
+
   <p class="foot-note">Tiles open each series on its own site in a new tab. Your library is saved in <b>this browser</b> — use export to carry it between devices.</p>
 </div>
 
@@ -319,8 +365,11 @@ label{display:block;font-size:.74rem;letter-spacing:.08em;text-transform:upperca
         </div>
         <div class="row">
           <label for="field-url">Where you read it</label>
-          <input id="field-url" type="text" placeholder="paste the series link" autocomplete="off">
-          <div class="hint">The “Read” button jumps straight here.</div>
+          <div class="url-row">
+            <input id="field-url" type="text" placeholder="paste the series link" autocomplete="off">
+            <button type="button" class="fetch-btn" id="fetch-btn">Auto-fill</button>
+          </div>
+          <div class="fetch-note" id="fetch-note"></div>
         </div>
         <div class="row two">
           <div>
@@ -399,13 +448,67 @@ function relTime(ts){
   return Math.floor(d/365)+"y ago";
 }
 
+/* ---- auto-fill helpers ---- */
+function detectSite(url){
+  try{
+    const h = new URL(normUrl(url)).hostname.replace(/^www\./,"").toLowerCase();
+    if(h.includes("comix")) return "comix";
+    if(h.includes("webtoon")) return "webtoon";
+    if(h.includes("mangadex")) return "mangadex";
+    if(h.includes("mangaupdates")) return "mangaupdates";
+    if(h.includes("tapas")) return "tapas";
+  }catch(e){}
+  return "custom";
+}
+function titleCase(s){ return s.replace(/\w\S*/g, w => w.charAt(0).toUpperCase()+w.slice(1).toLowerCase()); }
+function slugTitle(url){
+  try{
+    const u = new URL(normUrl(url));
+    const skip = new Set(["en","comic","comics","manga","manhwa","manhua","webtoon","webtoons","series","title","titles","list","read","reader","chapter","chapters","ch","c","v","vol","volume"]);
+    let cand = "";
+    u.pathname.split("/").filter(Boolean).forEach(seg=>{
+      const d = decodeURIComponent(seg);
+      if(/^\d+$/.test(d)) return;                 // pure number (ids / chapters)
+      if(/^[0-9a-f-]{16,}$/i.test(d)) return;      // uuid-ish
+      if(skip.has(d.toLowerCase())) return;
+      if(/[a-z]/i.test(d)) cand = d;               // keep the last word-like segment
+    });
+    if(!cand){ const q = u.searchParams.get("title") || u.searchParams.get("name"); if(q) cand = q; }
+    if(!cand) return "";
+    cand = cand.replace(/\.(html?|php)$/i,"").replace(/[-_+]+/g," ").replace(/\bchapter\b.*$/i,"").replace(/\s+/g," ").trim();
+    return cand ? titleCase(cand) : "";
+  }catch(e){ return ""; }
+}
+/* best-effort metadata fetch via a public CORS proxy. Many sites block this; the Quick-add
+   bookmarklet is the reliable path. Set META_PROXY to "" to disable, or swap the service. */
+const META_PROXY = "https://api.allorigins.win/get?url=";
+async function fetchMeta(url){
+  if(!META_PROXY) throw new Error("disabled");
+  const ctrl = new AbortController();
+  const timer = setTimeout(()=>ctrl.abort(), 9000);
+  try{
+    const res = await fetch(META_PROXY + encodeURIComponent(normUrl(url)), {signal:ctrl.signal});
+    if(!res.ok) throw new Error("status "+res.status);
+    const json = await res.json();
+    const doc = new DOMParser().parseFromString(json.contents||"", "text/html");
+    const meta = (sel,attr)=>{ const el=doc.querySelector(sel); return el ? (el.getAttribute(attr)||"").trim() : ""; };
+    let title = meta('meta[property="og:title"]','content') || meta('meta[name="twitter:title"]','content') || (doc.querySelector("title") ? doc.querySelector("title").textContent.trim() : "");
+    let cover = meta('meta[property="og:image"]','content') || meta('meta[name="twitter:image"]','content');
+    if(cover && !/^https?:\/\//i.test(cover) && !/^data:/i.test(cover)){ try{ cover = new URL(cover, normUrl(url)).href; }catch(e){} }
+    return {title, cover};
+  } finally { clearTimeout(timer); }
+}
+
 /* ---- build the static selects + site shortcuts ---- */
 function buildChrome(){
   // newsstand shortcuts
   const ns = $("#newsstand");
   ns.innerHTML = Object.keys(SITES).filter(k=>SITES[k].home).map(k=>{
     const s=SITES[k];
-    return `<a class="site-link" href="${s.home}" target="_blank" rel="noopener"><span class="swatch" style="background:${s.color}"></span>${esc(s.label)}</a>`;
+    return `<span class="site-chip">`+
+      `<a class="site-link" href="${s.home}" target="_blank" rel="noopener"><span class="swatch" style="background:${s.color}"></span>${esc(s.label)}</a>`+
+      `<button class="site-add" data-add-site="${k}" title="Add a ${esc(s.label)} series" aria-label="Add a ${esc(s.label)} series">＋</button>`+
+    `</span>`;
   }).join("");
 
   // filter selects
@@ -498,7 +601,7 @@ function render(){
 
 /* ---- modal ---- */
 let lastFocus=null;
-function openModal(id){
+function openModal(id, prefill){
   const editing = !!id;
   const x = editing ? series.find(s=>s.id===id) : null;
   $("#modal-title").textContent = editing ? "Edit series" : "Add a series";
@@ -510,10 +613,24 @@ function openModal(id){
   $("#field-url").value   = x ? (x.url||"") : "";
   $("#field-chapter").value = x ? (x.chapter||"") : "";
   $("#field-cover").value = x ? (x.cover||"") : "";
+  if(prefill && !editing){
+    if(prefill.url){ $("#field-url").value = prefill.url; $("#field-site").value = detectSite(prefill.url); }
+    if(prefill.site){ $("#field-site").value = prefill.site; }
+    if(prefill.cover){ $("#field-cover").value = normUrl(prefill.cover); }
+    let t = (prefill.title||"").trim();
+    if(!t && prefill.url){ t = slugTitle(prefill.url); }
+    if(t) $("#field-title").value = t;
+  }
+  setNote(editing ? "" : "Paste a link — the site fills in for you. Auto-fill also tries the title & cover.", editing ? "" : "busy");
   $("#row-title").classList.remove("invalid");
   lastFocus = document.activeElement;
   $("#backdrop").classList.add("open");
-  setTimeout(()=>$("#field-title").focus(),30);
+  setTimeout(()=>{ const f=$("#field-title"); f.focus(); if(f.value) f.select(); },30);
+}
+function setNote(msg, cls){
+  const n = $("#fetch-note"); if(!n) return;
+  n.textContent = msg||"";
+  n.className = "fetch-note" + (cls ? " "+cls : "");
 }
 function closeModal(){
   $("#backdrop").classList.remove("open");
@@ -606,6 +723,57 @@ function init(){
   $("#export-btn").onclick = exportLib;
   $("#import-btn").onclick = ()=>$("#import-file").click();
   $("#import-file").addEventListener("change", e=>{ if(e.target.files[0]) importLib(e.target.files[0]); e.target.value=""; });
+
+  // "+" on each Jump-to chip → add with that site preselected
+  $("#newsstand").addEventListener("click", e=>{
+    const b = e.target.closest("[data-add-site]");
+    if(b){ e.preventDefault(); openModal(null, {site:b.dataset.addSite}); }
+  });
+
+  // paste/blur a link → auto-pick the site and guess the title
+  $("#field-url").addEventListener("change", ()=>{
+    const url = $("#field-url").value.trim();
+    if(!url) return;
+    $("#field-site").value = detectSite(url);
+    if(!$("#field-title").value.trim()){ const g = slugTitle(url); if(g) $("#field-title").value = g; }
+  });
+
+  // Auto-fill button → try to read the real title & cover (best effort)
+  $("#fetch-btn").addEventListener("click", async ()=>{
+    const url = $("#field-url").value.trim();
+    if(!url){ setNote("Paste a link first.", "warn"); return; }
+    $("#field-site").value = detectSite(url);
+    if(!$("#field-title").value.trim()){ const g = slugTitle(url); if(g) $("#field-title").value = g; }
+    const btn = $("#fetch-btn"); const label = btn.textContent;
+    btn.disabled = true; btn.textContent = "…"; setNote("Reading the page…", "busy");
+    try{
+      const m = await fetchMeta(url);
+      const got = [];
+      if(m.title){ $("#field-title").value = m.title; got.push("title"); }
+      if(m.cover){ $("#field-cover").value = m.cover; got.push("cover"); }
+      if(got.length) setNote("Filled in "+got.join(" & ")+" — check it, then Save.", "ok");
+      else setNote("Couldn’t read details from this page. Fill them in, or use the Quick-add bookmarklet below.", "warn");
+    }catch(err){
+      setNote("Couldn’t reach this page automatically (many sites block it). Add a cover link by hand, or use the bookmarklet.", "warn");
+    }finally{ btn.disabled = false; btn.textContent = label; }
+  });
+
+  // build the Quick-add bookmarklet so it targets this exact deployment
+  const dash = location.origin + location.pathname;
+  const bm = "javascript:(function(){"
+    + "var t=document.querySelector('meta[property=\"og:title\"]');t=t?t.content:document.title;"
+    + "var i=document.querySelector('meta[property=\"og:image\"]');i=i?i.content:'';"
+    + "var u=location.href;"
+    + "window.open('" + dash + "?add=1&title='+encodeURIComponent(t||'')+'&cover='+encodeURIComponent(i||'')+'&url='+encodeURIComponent(u),'_blank');"
+    + "})();";
+  const bmEl = $("#bookmarklet"); if(bmEl) bmEl.setAttribute("href", bm);
+
+  // if opened from the bookmarklet / a quick-add link, prefill the form
+  const params = new URLSearchParams(location.search);
+  if(params.get("add") || params.get("url") || params.get("title")){
+    openModal(null, {url:params.get("url")||"", title:params.get("title")||"", cover:params.get("cover")||""});
+    history.replaceState({}, "", location.pathname);
+  }
 
   if(memoryOnly){
     $(".foot-note").innerHTML = "Heads up: this preview can’t save to storage, so changes last only for this session. Open the downloaded file or deploy it and saving works normally.";
